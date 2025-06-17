@@ -1,0 +1,40 @@
+---
+title: "Distribution of mosquito species in Hermosillo, Sonora"
+author: " Laboratorio de entomología médica, MScD Javier E. Verdugo M. "
+date: "2025-06-17"
+output: html_document
+---
+
+## Introduction
+
+Mosquito surveillance is a key component in vector-borne disease control. Adult mosquito collection allows for early detection of vector species that may be involved in the transmission of viruses such as dengue, Zika, chikungunya, and West Nile virus. Identifying species abundance over time helps guide public health strategies and mitigate outbreaks effectively.
+
+## Annual Species Abundance Maps
+
+Below are links to yearly animated graphs showing the monthly abundance of mosquito species in Hermosillo from 2019 to 2025.
+
+```{r results='asis', echo=FALSE}
+# Vector de años
+años <- 2019:2025
+
+# Generar links en formato HTML
+for (a in años) {
+  cat(sprintf("- [%s](abundancia_mosquitos_%d.gif)\n", paste("GIF:", a), a))
+}
+```
+
+## Interactive maps by year
+
+A continuación se presentan los enlaces a los mapas de calor de abundancia de mosquitos por manzana, generados por año:
+
+```{r enlaces-mapas, echo=FALSE, results='asis'}
+library(glue)
+
+# Años que cubren tus datos
+años <- 2019:2025
+
+# Crear los enlaces dinámicamente
+enlaces <- glue("- [Mapa de {años}](mapa_calor_manzanas_{años}.html)")
+
+# Mostrar los enlaces en formato Markdown
+cat(enlaces, sep = "\n")
