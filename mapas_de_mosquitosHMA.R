@@ -18,7 +18,7 @@ library(forcats)
 
 library(ggplot2)
 library(gganimate)
-
+library(base64enc)
 
 #library(tmap)
 
@@ -163,13 +163,7 @@ joined_data <- shape_datam %>%
   st_cast("MULTIPOLYGON") %>%
   mutate(año = year(fecha_colecta_date)) 
 
-
-# joined_data <- shape_datam %>%
-#   right_join(df_filtradom, by = "sector-manzana") %>%
-#   group_by(`sector-manzana`) %>%
-#   summarize(Total = sum(Individuos, na.rm = TRUE))
-
-head(joined_data)
+  head(joined_data)
 
 # Asegurarnos de que las geometrías sean válidas
 joined_data <- st_make_valid(joined_data)
@@ -189,10 +183,15 @@ joined_data <- joined_data %>%
   st_transform(4326) %>%
   mutate(año = year(fecha_colecta_date))
 
+
+# Codifica la imagen como base64
+img_base64 <- base64enc::dataURI(file = "Imagen/compass-rose.jpg", mime = "image/jpeg")
+
+
 # Extrae años disponibles
 años <- sort(unique(joined_data$año))
 
-#bucle para crear mapas con titulo 
+#Bucle para crear mapas con titulo 
 
 for (a in años) {
   
@@ -254,137 +253,12 @@ for (a in años) {
       labelOptions = labelOptions(noHide = TRUE, direction = "center", textOnly = TRUE, 
                                   style = list("color" = "black", "font-weight" = "bold"))
     ) %>%
-    addControl(titulo_html, position = "topright", className = "map-title")
-  
-  # Guardar como HTML
-  saveWidget(mapa, paste0("mapa_calor_manzanas_", a, ".html"), selfcontained = TRUE)
-}
-
-##### pendiente ya no se usa 
-  
-# Bucle para crear un mapa por año
-for (a in años) {
-  
-  datos_anio <- joined_data %>%
-    filter(año == a) %>%
-    group_by(`sector-manzana`, geometry) %>%
-    summarise(
-      total_individuos = sum(Individuos, na.rm = TRUE),
-      num_especies = n_distinct(Diagnóstico),
-      especies = paste(sort(unique(Diagnóstico)), collapse = ", "),
-      .groups = "drop"
-    )
-  
-  # Paleta de colores para abundancia
-  pal <- colorNumeric(
-    palette = "YlOrRd",
-    domain = datos_anio$total_individuos
-  )
-  
-  # Crear etiquetas emergentes
-  etiquetas <- paste0(
-    "<strong>Manzana: </strong>", datos_anio$`sector-manzana`, "<br>",
-    "<strong>Total de individuos: </strong>", datos_anio$total_individuos, "<br>",
-    "<strong>N° especies distintas: </strong>", datos_anio$num_especies,"<br>",
-    "<strong>N° especies: </strong>", datos_anio$especies 
-  )
-  
-  # Centro aproximado de Hermosillo
-  centro <- c(lng = -110.9747, lat = 29.0728)
-  
-  # Mapa leaflet
-  mapa <- leaflet(datos_anio) %>%
-    addProviderTiles(providers$OpenStreetMap) %>%
-    setView(lng = centro["lng"], lat = centro["lat"], zoom = 12) %>%
-    addPolygons(
-      fillColor = ~pal(total_individuos),
-      fillOpacity = 0.7,
-      color = "black",
-      weight = 0.5,
-      label = lapply(etiquetas, htmltools::HTML)
-    ) %>%
-    addLegend(
-      "bottomright",
-      pal = pal,
-      values = ~total_individuos,
-      title = paste("Abundancia total en", a),
-      opacity = 1
-    ) %>%
-    addLabelOnlyMarkers(
-      data = st_centroid(datos_anio),
-      lng = ~st_coordinates(geometry)[,1],
-      lat = ~st_coordinates(geometry)[,2],
-      label = ~as.character(num_especies),
-      labelOptions = labelOptions(noHide = TRUE, direction = "center", textOnly = TRUE, style = list("color" = "black", "font-weight" = "bold"))
+    addControl(titulo_html, position = "topright", className = "map-title") %>%
+    addControl(
+      html = paste0("<img src='", img_base64, "' style='width:60px;'>"),
+      position = "bottomleft"
     )
   
   # Guardar como HTML
-  saveWidget(mapa, paste0("mapa_calor_manzanas_", a, ".html"), selfcontained = TRUE)
+  saveWidget(mapa, paste0("mapas_interactivos/mapa_calor_manzanas_", a, ".html"), selfcontained = TRUE)
 }
-
-
-
-###otro bucle para crear mapas
-
-for (a in años) {
-  
-  datos_anio <- df_filtradom %>%
-    filter(year(fecha_colecta_date) == a) %>%
-    group_by(`sector-manzana`, Diagnóstico) %>%
-    summarise(Individuos = sum(Individuos, na.rm = TRUE), .groups = "drop") %>%
-    group_by(`sector-manzana`) %>%
-    summarise(
-      total_individuos = sum(Individuos, na.rm = TRUE),
-      num_especies = n_distinct(Diagnóstico),
-      especies = paste(sort(unique(Diagnóstico)), collapse = ", "),
-      .groups = "drop"
-    )
-  
-  # Unir con shape para conservar todos los polígonos
-  datos_map <- shape_datam %>%
-    left_join(datos_anio, by = "sector-manzana")
-  
-  # Etiquetas emergentes
-  etiquetas <- paste0(
-    "<strong>Manzana: </strong>", datos_map$`sector-manzana`, "<br>",
-    "<strong>Total de individuos: </strong>", ifelse(is.na(datos_map$total_individuos), "0", datos_map$total_individuos), "<br>",
-    "<strong>N° especies distintas: </strong>", ifelse(is.na(datos_map$num_especies), "0", datos_map$num_especies), "<br>",
-    "<strong>Especies: </strong>", ifelse(is.na(datos_map$especies), "Sin datos", datos_map$especies)
-  )
-  
-  # Paleta de colores (poner dominio estático si deseas consistencia entre años)
-  pal <- colorNumeric("YlOrRd", domain = datos_map$total_individuos, na.color = "transparent")
-  
-  mapa <- leaflet() %>%
-    addProviderTiles(providers$CartoDB.Positron) %>%
-    
-    # Agregar contornos
-    addPolylines(
-      data = shape_contornos,
-      color = "gray40",
-      weight = 0.6,
-      opacity = 0.5,
-      group = "Contornos"
-    ) %>%
-    
-    # Agregar polígonos (todos, aunque estén vacíos)
-    addPolygons(
-      data = datos_map,
-      fillColor = ~pal(total_individuos),
-      color = "black",
-      weight = 0.4,
-      fillOpacity = 0.6,
-      label = lapply(etiquetas, htmltools::HTML)
-    ) %>%
-    
-    addLegend(
-      "bottomright",
-      pal = pal,
-      values = datos_map$total_individuos,
-      title = paste("Total individuos -", a),
-      opacity = 1
-    )
-  
-  saveWidget(mapa, paste0("lineas_&_mapa_manzanas_mosquitos_", a, ".html"), selfcontained = TRUE)
-}
-

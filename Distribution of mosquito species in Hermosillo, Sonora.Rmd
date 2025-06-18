@@ -19,7 +19,7 @@ años <- 2019:2025
 
 # Generar links en formato HTML
 for (a in años) {
-  cat(sprintf("- [%s](abundancia_mosquitos_%d.gif)\n", paste("GIF:", a), a))
+  cat(sprintf("- [%s](graficas/abundancia_mosquitos_%d.gif)\n", paste("GIF:", a), a))
 }
 ```
 
@@ -34,7 +34,7 @@ library(glue)
 años <- 2019:2025
 
 # Crear los enlaces dinámicamente
-enlaces <- glue("- [Mapa de {años}](mapa_calor_manzanas_{años}.html)")
+enlaces <- glue("- [Mapa de {años}](mapas_interactivos/mapa_calor_manzanas_{años}.html)")
 
 # Mostrar los enlaces en formato Markdown
 cat(enlaces, sep = "\n")

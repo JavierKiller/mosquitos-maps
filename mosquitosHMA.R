@@ -155,10 +155,28 @@ ggplot(df_plot, aes(x = mes, y = total_individuos, color = Diagnóstico , group 
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
 
+# Paleta base fija
+colores_fijos <- c(
+  "Aedes aegypti" = "black",
+  "Culex quinquefasciatus" = "red",
+  "Anopheles pseudopunctipennis" = "forestgreen"
+)
+# Lista total de especies
+todas_las_especies <- sort(unique(df_hillosm$Diagnóstico))
+
+# Especies no asignadas todavía
+especies_restantes <- setdiff(todas_las_especies, names(colores_fijos))
+
+# Colores adicionales
+colores_extra <- RColorBrewer::brewer.pal(n = max(length(especies_restantes), 8), name = "Dark2")
+if (length(especies_restantes) > length(colores_extra)) {
+  colores_extra <- grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)][1:length(especies_restantes)]
+}
+
 
 # Crear una lista de años únicos
 años <- unique(df_plot$año)
-# 
+ 
 # # Crear un gráfico por cada año y guardarlo como imagen
 for (a in años) {
   df_anual <- df_plot %>% filter(año == a)
@@ -218,7 +236,7 @@ for (a in años) {
     )
   
   # Guardar imagen
-  ggsave(filename = paste0("abundancia_mosquitos_", a, ".png"), plot = p, width = 10, height = 6, dpi = 300)
+  ggsave(filename = paste0("graficas/abundancia_mosquitos_", a, ".png"), plot = p, width = 10, height = 6, dpi = 300)
 }
 # 
 # #Nuevo grafico 
@@ -259,76 +277,55 @@ for (a in años) {
 # }
 #
 ###### Generando gif
-#
-
-for (a in años) {
-  df_anual <- df_plot %>% filter(año == a)
-
-  # Paso 1: Calcular totales por especie
-  especie_totales <- df_anual %>%
-    group_by(Diagnóstico) %>%
-    summarise(total = sum(total_individuos), .groups = "drop") %>%
-    mutate(label = paste0(Diagnóstico, " (n=", total, ")"))
-
-  # Paso 2: Crear una tabla de reemplazo
-  etiquetas <- setNames(especie_totales$label, especie_totales$Diagnóstico)
-
-  # Paso 3: Aplicar las etiquetas al dataframe anual
-  df_anual <- df_anual %>%
-    mutate(
-      Diagnóstico_label = etiquetas[Diagnóstico],
-      mes_num = as.numeric(mes)  # Para usar en transition_reveal
-    )
-
-  # Gráfico con transición acumulativa
-  p_anim <- ggplot(df_anual, aes(x = mes_num, y = total_individuos, color = Diagnóstico_label, group = Diagnóstico_label)) +
-    geom_line(size = 1, alpha = 0.6) +
-    geom_point(size = 3, alpha = 0.8) +
-    scale_x_continuous(
-      breaks = 1:12,
-      labels = month.abb
-    ) +
-    labs(
-      title = paste("Abundancia mensual acumulada por especie -", a),
-      subtitle = 'Mes: {frame_along}',
-      x = "Mes",
-      y = "Cantidad de individuos",
-      color = "Especie (total individuos)"
-    ) +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(size = 14, face = "bold")
-    ) +
-    transition_reveal(mes_num)
-
-  # Guardar animación como GIF
-  anim_save(
-    filename = paste0("abundancia_A_mosquitos_", a, ".gif"),
-    animation = animate(p_anim, width = 1000, height = 600, fps = 3, duration = 12, renderer = gifski_renderer())
-  )
-}
+# for (a in años) {
+#   df_anual <- df_plot %>% filter(año == a)
+# 
+#   # Paso 1: Calcular totales por especie
+#   especie_totales <- df_anual %>%
+#     group_by(Diagnóstico) %>%
+#     summarise(total = sum(total_individuos), .groups = "drop") %>%
+#     mutate(label = paste0(Diagnóstico, " (n=", total, ")"))
+# 
+#   # Paso 2: Crear una tabla de reemplazo
+#   etiquetas <- setNames(especie_totales$label, especie_totales$Diagnóstico)
+# 
+#   # Paso 3: Aplicar las etiquetas al dataframe anual
+#   df_anual <- df_anual %>%
+#     mutate(
+#       Diagnóstico_label = etiquetas[Diagnóstico],
+#       mes_num = as.numeric(mes)  # Para usar en transition_reveal
+#     )
+# 
+#   # Gráfico con transición acumulativa
+#   p_anim <- ggplot(df_anual, aes(x = mes_num, y = total_individuos, color = Diagnóstico_label, group = Diagnóstico_label)) +
+#     geom_line(size = 1, alpha = 0.6) +
+#     geom_point(size = 3, alpha = 0.8) +
+#     scale_x_continuous(
+#       breaks = 1:12,
+#       labels = month.abb
+#     ) +
+#     labs(
+#       title = paste("Abundancia mensual acumulada por especie -", a),
+#       subtitle = 'Mes: {frame_along}',
+#       x = "Mes",
+#       y = "Cantidad de individuos",
+#       color = "Especie (total individuos)"
+#     ) +
+#     theme_minimal() +
+#     theme(
+#       axis.text.x = element_text(angle = 45, hjust = 1),
+#       plot.title = element_text(size = 14, face = "bold")
+#     ) +
+#     transition_reveal(mes_num)
+# 
+#   # Guardar animación como GIF
+#   anim_save(
+#     filename = paste0("graficas/abundancia_A_mosquitos_", a, ".gif"),
+#     animation = animate(p_anim, width = 1000, height = 600, fps = 3, duration = 12, renderer = gifski_renderer())
+#   )
+# }
 
 ### Nuevo gif 
-
-# Paleta base fija
-colores_fijos <- c(
-  "Aedes aegypti" = "black",
-  "Culex quinquefasciatus" = "red",
-  "Anopheles pseudopunctipennis" = "forestgreen"
-)
-
-# Lista total de especies
-todas_las_especies <- sort(unique(df_hillosm$Diagnóstico))
-
-# Especies no asignadas todavía
-especies_restantes <- setdiff(todas_las_especies, names(colores_fijos))
-
-# Colores adicionales
-colores_extra <- RColorBrewer::brewer.pal(n = max(length(especies_restantes), 8), name = "Dark2")
-if (length(especies_restantes) > length(colores_extra)) {
-  colores_extra <- grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)][1:length(especies_restantes)]
-}
 
 # Bucle por año
 for (a in años) {
@@ -394,7 +391,7 @@ for (a in años) {
   
   # Guardar animación
   anim_save(
-    filename = paste0("abundancia_mosquitos_", a, ".gif"),
+    filename = paste0("graficas/abundancia_mosquitos_", a, ".gif"),
     animation = animate(p_anim, width = 1000, height = 600, fps = 3, duration = 12, renderer = gifski_renderer())
   )
 }
