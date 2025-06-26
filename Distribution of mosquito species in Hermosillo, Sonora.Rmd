@@ -4,6 +4,16 @@ author: " Laboratorio de entomología médica, MScD Javier E. Verdugo M. "
 date: "2025-06-17"
 output: html_document
 ---
+```{r setup, include=FALSE}
+library(sf)
+library(leaflet)
+library(leaflet.extras)
+library(leaflet.extras2)
+library(lubridate)
+library(dplyr)
+library(htmlwidgets)
+library(glue)
+```
 
 ## Introduction
 
@@ -21,14 +31,16 @@ años <- 2019:2025
 for (a in años) {
   cat(sprintf("- [%s](graficas/abundancia_mosquitos_%d.gif)\n", paste("GIF:", a), a))
 }
+
 ```
+
 
 ## Interactive maps by year
 
-A continuación se presentan los enlaces a los mapas de calor de abundancia de mosquitos por manzana, generados por año:
 
-```{r enlaces-mapas, echo=FALSE, results='asis'}
-library(glue)
+Below are links to heat maps of mosquito abundance per block, for the generations generated per year:
+
+```{r enlaces-mapas-anuales, echo=FALSE, results='asis'}
 
 # Años que cubren tus datos
 años <- 2019:2025
@@ -38,3 +50,30 @@ enlaces <- glue("- [Mapa de {años}](mapas_interactivos/mapa_calor_manzanas_{añ
 
 # Mostrar los enlaces en formato Markdown
 cat(enlaces, sep = "\n")
+
+
+```
+
+## Interactive maps by genere of mosquito
+
+Below are links to heat maps of mosquito abundance by block, for mosquito genera:
+
+```{r enlaces-mapas-especies, echo=FALSE, results='asis'}
+
+
+# Géneros que cubren tus datos
+Especies <- c("aedes", "anopheles")
+
+# Crear enlaces normales
+enlaces1 <- glue("- [Mapa de {Especies}](mapas_interactivos/mapa_calor_{Especies}.html)")
+
+# Crear enlaces por año
+enlaces2 <- glue("- [Mapa de {Especies} por año](mapas_interactivos/mapa_calor_{Especies}_por_año.html)")
+
+# Mostrar ambos bloques de enlaces
+cat(enlaces1, sep = "\n")
+
+cat("\n\n")  # Salto de línea
+cat(enlaces2, sep = "\n")
+
+```
