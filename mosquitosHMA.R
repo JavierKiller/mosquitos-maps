@@ -1,4 +1,4 @@
-library(sf)
+library(sf) 
 library(leaflet)
 library(dplyr)
 library(lubridate)
@@ -395,3 +395,4 @@ for (a in años) {
     animation = animate(p_anim, width = 1000, height = 600, fps = 3, duration = 12, renderer = gifski_renderer())
   )
 }
+#
